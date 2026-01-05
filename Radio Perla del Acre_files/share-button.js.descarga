@@ -1,0 +1,81 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const shareButton = document.querySelector('.share-button');
+    const createShareOverlay = () => {
+        const overlay = document.createElement('div');
+        overlay.classList.add('share-overlay');
+        overlay.innerHTML = `
+            <div class="share-modal">
+                <button class="close-button">&times;</button>
+                <h2>Compartir Radio Perla Del Acre</h2>
+                <div class="share-links">
+                    <a href="#" onclick="shareViaWhatsApp()">
+                        <i class="bi bi-whatsapp"></i>
+                        WhatsApp
+                    </a>
+                    <a href="#" onclick="shareViaFacebook()">
+                        <i class="bi bi-facebook"></i>
+                        Facebook
+                    </a>
+                    <a href="#" onclick="shareViaTwitter()">
+                        <i class="bi bi-twitter"></i>
+                        Twitter
+                    </a>
+                </div>
+            </div>
+        `;
+        return overlay;
+    };
+
+    shareButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        const shareOverlay = createShareOverlay();
+        document.body.appendChild(shareOverlay);
+        
+        // Trigger reflow to enable transition
+        shareOverlay.offsetWidth;
+        shareOverlay.classList.add('visible');
+
+        const closeButton = shareOverlay.querySelector('.close-button');
+        closeButton.addEventListener('click', () => {
+            shareOverlay.classList.remove('visible');
+            setTimeout(() => {
+                document.body.removeChild(shareOverlay);
+            }, 300);
+        });
+
+        shareOverlay.addEventListener('click', (e) => {
+            if (e.target === shareOverlay) {
+                shareOverlay.classList.remove('visible');
+                setTimeout(() => {
+                    document.body.removeChild(shareOverlay);
+                }, 300);
+            }
+        });
+    });
+
+    // Web Share API fallbacks
+    window.shareViaWhatsApp = () => {
+        const shareText = 'Escucha Radio Perla del Acre - La radio que te acompaña';
+        const shareUrl = window.location.href;
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+        window.open(whatsappUrl, '_blank');
+    };
+
+    window.shareViaFacebook = () => {
+        const shareUrl = window.location.href;
+        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        window.open(facebookShareUrl, '_blank');
+    };
+
+    window.shareViaTwitter = () => {
+        const shareText = 'Escucha Radio Perla del  Acre - La radio que te acompaña';
+        const shareUrl = window.location.href;
+        const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        window.open(twitterShareUrl, '_blank');
+    };
+
+    window.shareViaYouTube = () => {
+        const youtubeUrl = 'https://www.youtube.com/@youpage';
+        window.open(youtubeUrl, '_blank');
+    };
+});

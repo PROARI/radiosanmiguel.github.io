@@ -1,0 +1,33 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const chatButton = document.getElementById('chatButton');
+    const chatContainer = document.getElementById('chatContainer');
+    const closeChatButton = document.getElementById('closeChatButton');
+    
+    // Toggle chat container visibility
+    chatButton.addEventListener('click', () => {
+        chatContainer.classList.toggle('open');
+    });
+
+    // Close chat container
+    closeChatButton.addEventListener('click', () => {
+        chatContainer.classList.remove('open');
+    });
+    
+    // Close chat when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!chatContainer.contains(event.target) && 
+            !chatButton.contains(event.target) &&
+            chatContainer.classList.contains('open')) {
+            chatContainer.classList.remove('open');
+        }
+    });
+    
+    // Removed message sending functionality - replaced with embedded cbox
+
+    // Create Lucide icons
+    try {
+        lucide.createIcons();
+    } catch (error) {
+        console.error('Lucide icon creation error:', error);
+    }
+});

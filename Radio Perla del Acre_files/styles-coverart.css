@@ -1,0 +1,18 @@
+/* Cover art transitions and styling */
+.station-info img {
+    transition: all 0.5s ease-in-out;
+    object-fit: cover;
+    width: 48px;
+    height: 48px;
+    border-radius: 0.25rem;
+}
+
+/* Animation for cover art changes */
+@keyframes coverFadeIn {
+    from { opacity: 0.5; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.station-info img.changing {
+    animation: coverFadeIn 0.5s ease-in-out;
+}

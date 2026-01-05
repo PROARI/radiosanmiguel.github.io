@@ -1,0 +1,12 @@
+/* Style for the heart icon to always be red */
+#likeButton {
+    color: #ef4444; /* Always red heart */
+}
+
+#likeButton:hover {
+    transform: scale(1.1);
+}
+
+body.dark-mode #likeButton {
+    color: #ef4444; /* Keep it red in dark mode too */
+}

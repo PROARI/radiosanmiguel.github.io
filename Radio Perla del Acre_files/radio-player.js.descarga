@@ -1,0 +1,301 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // Select elements safely with null checks
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playPauseButton = document.getElementById('playPauseButton');
+    const likeButton = document.getElementById('likeButton');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+    const volumePercentage = document.getElementById('volumePercentage');
+    const volumeIcon = document.querySelector('[data-lucide="volume-2"]');
+    const themeToggle = document.getElementById('themeToggle');
+
+    // Comprehensive null check
+    const requiredElements = [
+        audioPlayer, playPauseButton, likeButton, 
+        volumeSlider, prevButton, nextButton, volumePercentage, volumeIcon, themeToggle
+    ];
+
+    if (requiredElements.some(el => el === null)) {
+        console.error('One or more required elements are missing');
+        return;
+    }
+
+    let isPlaying = false;
+    let isLiked = false;
+    let currentStationIndex = 0;
+    let previousVolume = 1; // Store the previous volume before muting
+    
+    const stations = [
+        { name: 'Radio Perla Del Acre', url: 'https://stream.zeno.fm/ejzkrieezemvv', src: 'https://stream.zeno.fm/ejzkrieezemvv' }
+    ];
+
+    // Enhanced Autoplay Feature for Mobile and Desktop Devices
+    function autoPlay() {
+        if (!audioPlayer) return;
+
+        // Check if it's a mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Attempt to play with minimal user interaction
+        const playAttempt = audioPlayer.play();
+
+        if (playAttempt !== undefined) {
+            playAttempt
+                .then(() => {
+                    isPlaying = true;
+                    updatePlayPauseButton();
+                    updateNavigationButtons();
+                    console.log('Autoplay initiated successfully');
+                })
+                .catch(error => {
+                    console.warn('Autoplay was prevented:', error);
+                    
+                    // Fallback for devices with strict autoplay restrictions
+                    if (isMobile) {
+                        // Create a one-time event listener for user interaction
+                        const enableAutoplay = (e) => {
+                            audioPlayer.play()
+                                .then(() => {
+                                    isPlaying = true;
+                                    updatePlayPauseButton();
+                                    updateNavigationButtons();
+                                })
+                                .catch(playError => {
+                                    console.warn('Play interrupted:', playError);
+                                });
+                            
+                            // Remove event listeners after first interaction
+                            document.removeEventListener('touchstart', enableAutoplay);
+                            document.removeEventListener('click', enableAutoplay);
+                        };
+
+                        document.addEventListener('touchstart', enableAutoplay);
+                        document.addEventListener('click', enableAutoplay);
+                    }
+                });
+        }
+    }
+
+    // Mute/Unmute functionality
+    volumeIcon.addEventListener('click', toggleMute);
+
+    function toggleMute() {
+        if (!audioPlayer) return;
+
+        if (audioPlayer.volume > 0) {
+            // Store current volume and set to 0
+            previousVolume = audioPlayer.volume;
+            audioPlayer.volume = 0;
+            volumeSlider.value = 0;
+            volumePercentage.textContent = '0%';
+            updateVolumeIcon(true);
+        } else {
+            // Restore previous volume
+            audioPlayer.volume = previousVolume;
+            volumeSlider.value = previousVolume;
+            volumePercentage.textContent = `${Math.round(previousVolume * 100)}%`;
+            updateVolumeIcon(false);
+        }
+    }
+
+    function updateVolumeIcon(isMuted) {
+        try {
+            volumeIcon.setAttribute('data-lucide', isMuted ? 'volume-x' : 'volume-2');
+            lucide.createIcons();
+        } catch (error) {
+            console.error('Update volume icon error:', error);
+        }
+    }
+
+    // Enhanced event listeners with error handling
+    playPauseButton.addEventListener('click', () => {
+        try {
+            togglePlay();
+        } catch (error) {
+            console.error('Play/Pause error:', error);
+        }
+    });
+
+    likeButton.addEventListener('click', toggleLike);
+    volumeSlider.addEventListener('input', handleVolumeChange);
+    prevButton.addEventListener('click', playPreviousStation);
+    nextButton.addEventListener('click', playNextStation);
+
+    // Comprehensive playback error handling
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        isPlaying = false;
+        updatePlayPauseButton();
+        updateNavigationButtons();
+    });
+
+    function togglePlay() {
+        if (!audioPlayer) return;
+
+        if (isPlaying) {
+            audioPlayer.pause();
+            isPlaying = false;
+        } else {
+            const playPromise = audioPlayer.play();
+            
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        isPlaying = true;
+                    })
+                    .catch(error => {
+                        console.warn('Playback was prevented:', error);
+                        isPlaying = false;
+                    })
+                    .finally(() => {
+                        updatePlayPauseButton();
+                        updateNavigationButtons();
+                    });
+            }
+        }
+
+        updatePlayPauseButton();
+        updateNavigationButtons();
+    }
+
+    function toggleLike() {
+        if (!likeButton) return;
+        
+        isLiked = !isLiked;
+        likeButton.classList.toggle('liked', isLiked);
+    }
+
+    function handleVolumeChange() {
+        if (audioPlayer) {
+            audioPlayer.volume = volumeSlider.value;
+            
+            // Update volume percentage display
+            const volumePercent = Math.round(volumeSlider.value * 100);
+            volumePercentage.textContent = `${volumePercent}%`;
+
+            // Update volume icon when slider changes
+            updateVolumeIcon(volumeSlider.value === '0');
+        }
+    }
+
+    function updatePlayPauseButton() {
+        if (!playPauseButton) return;
+
+        const iconElement = playPauseButton.querySelector('svg') || playPauseButton.querySelector('i');
+        
+        if (iconElement) {
+            try {
+                // Remove any existing lucide classes
+                iconElement.classList.remove('lucide-play', 'lucide-pause');
+                
+                // Set the correct icon based on playing state
+                iconElement.setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
+                
+                // Recreate Lucide icons
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Update play/pause button error:', error);
+            }
+        }
+    }
+
+    function updateNavigationButtons() {
+        // Always disable prev/next if only one station
+        if (stations.length <= 1) {
+            prevButton.disabled = true;
+            nextButton.disabled = true;
+        } else {
+            prevButton.disabled = currentStationIndex === 0;
+            nextButton.disabled = currentStationIndex === stations.length - 1;
+        }
+    }
+
+    function playPreviousStation() {
+        if (currentStationIndex > 0) {
+            currentStationIndex--;
+            changeStation();
+        }
+    }
+
+    function playNextStation() {
+        if (currentStationIndex < stations.length - 1) {
+            currentStationIndex++;
+            changeStation();
+        }
+    }
+
+    function changeStation() {
+        const station = stations[currentStationIndex];
+        
+        // Ensure audioPlayer exists before modifying
+        if (audioPlayer) {
+            audioPlayer.src = station.src;
+        }
+        
+        const stationNameElement = document.querySelector('.station-name');
+        if (stationNameElement) {
+            stationNameElement.textContent = station.name;
+        }
+        
+        if (isPlaying) {
+            audioPlayer.play().catch(e => {
+                console.warn('Play interrupted:', e);
+                isPlaying = false;
+                updatePlayPauseButton();
+            });
+        }
+        
+        updateNavigationButtons();
+    }
+
+    // Function to toggle theme
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        
+        // Update localStorage
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('radioPerlaTheme', isDarkMode ? 'dark' : 'light');
+        
+        // Update theme toggle icon
+        const themeIcon = themeToggle.querySelector('svg') || themeToggle.querySelector('i');
+        if (themeIcon) {
+            try {
+                themeIcon.setAttribute('data-lucide', isDarkMode ? 'sun' : 'moon');
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Theme toggle icon update error:', error);
+            }
+        }
+    }
+
+    // Apply saved theme on page load
+    const savedTheme = localStorage.getItem('radioPerlaTheme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Add event listener to theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // Add autoplay when the page loads, with mobile-specific handling
+    autoPlay();
+
+    // Initialize 
+    updateNavigationButtons();
+    volumePercentage.textContent = '100%';
+    
+    // Safely create Lucide icons
+    try {
+        lucide.createIcons();
+    } catch (error) {
+        console.error('Lucide icon creation error:', error);
+    }
+
+    // Recreate Lucide icons to ensure they work after theme toggle
+    try {
+        lucide.createIcons();
+    } catch (error) {
+        console.error('Lucide icon creation error:', error);
+    }
+});

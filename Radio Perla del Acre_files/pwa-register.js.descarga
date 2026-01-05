@@ -1,0 +1,48 @@
+// Register service worker for PWA functionality
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('New content available, please refresh');
+            }
+          });
+        });
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
+
+// Global variable to store the deferred prompt
+let deferredPrompt;
+
+// Listen for the beforeinstallprompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('beforeinstallprompt event fired in pwa-register');
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  console.log('Deferred prompt stored');
+});
+
+// Check if app is running in standalone mode
+window.addEventListener('load', () => {
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('App is running in standalone mode');
+    document.body.classList.add('standalone');
+  }
+});
+
+// Listen for successful app installation
+window.addEventListener('appinstalled', (evt) => {
+  console.log('PWA was installed');
+  deferredPrompt = null;
+});
